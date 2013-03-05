@@ -823,7 +823,8 @@ if (typeof jQuery != 'undefined') {
 				
 				// find the size of all the other controls besides the rail
 				others.each(function() {
-					if ($(this).css('position') != 'absolute') {
+					var $this = $(this);
+					if ($this.css('position') != 'absolute' && $this.is(':visible')) {
 						usedWidth += $(this).outerWidth(true);
 					}
 				});
@@ -864,8 +865,8 @@ if (typeof jQuery != 'undefined') {
 				poster.hide();
 			}
 
-			media.addEventListener('play',function() {
-				poster.hide();
+			media.addEventListener('playing',function() {
+				poster.fadeOut();
 			}, false);
 		},
 		
@@ -907,6 +908,9 @@ if (typeof jQuery != 'undefined') {
 				.appendTo(layers)
 				.click(function() {
                     if (t.options.clickToPlayPause) {
+						if (t.options.resetOnPlay) {
+							media.setCurrentTime(0);
+						}
                         if (media.paused) {
                             media.play();
                         } else {
@@ -1083,6 +1087,9 @@ if (typeof jQuery != 'undefined') {
 			if (!t.isDynamic) {
 				t.$node.insertBefore(t.container)
 			}
+
+			// Remove the player from the mejs.players array so that pauseOtherPlayers doesn't blow up when trying to pause a non existance flash api.
+			mejs.players.splice( $.inArray( t, mejs.players ), 1);
 			
 			t.container.remove();
 		}
@@ -1349,8 +1356,8 @@ if (typeof jQuery != 'undefined') {
 				// update bar and handle
 				if (t.total && t.handle) {
 					var 
-						newWidth = t.total.width() * t.media.currentTime / t.media.duration,
-						handlePos = newWidth - (t.handle.outerWidth(true) / 2);
+						newWidth = Math.round(t.total.width() * t.media.currentTime / t.media.duration),
+						handlePos = newWidth - Math.round(t.handle.outerWidth(true) / 2);
 
 					t.current.width(newWidth);
 					t.handle.css('left', handlePos);
@@ -1656,7 +1663,12 @@ if (typeof jQuery != 'undefined') {
 			if (t.container.is(':visible')) {
 				// set initial volume
 				positionVolumeHandle(player.options.startVolume);
-				
+
+				// mutes the media and sets the volume icon muted if the initial volume is set to 0
+        if (player.options.startVolume === 0) {
+          media.setMuted(true);
+        }
+
 				// shim gets the startvolume as a parameter, but we have to set it on the native <video> and <audio> elements
 				if (media.pluginType === 'native') {
 					media.setVolume(player.options.startVolume);
