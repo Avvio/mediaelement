@@ -849,8 +849,8 @@
 				poster.hide();
 			}
 
-			media.addEventListener('play',function() {
-				poster.hide();
+			media.addEventListener('playing',function() {
+				poster.fadeOut();
 			}, false);
 		},
 		
@@ -892,6 +892,9 @@
 				.appendTo(layers)
 				.click(function() {
                     if (t.options.clickToPlayPause) {
+						if (t.options.resetOnPlay) {
+							media.setCurrentTime(0);
+						}
                         if (media.paused) {
                             media.play();
                         } else {
